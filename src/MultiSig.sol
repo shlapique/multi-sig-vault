@@ -1,9 +1,11 @@
-// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.28;
+
+import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
+import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract MultiSig {
+contract MultiSig is Initializable, UUPSUpgradeable {
     address[] public owners;
     uint256 public threshold;
     
@@ -21,20 +23,27 @@ contract MultiSig {
     event TransactionSubmitted(uint256 indexed txId, address indexed sender);
     event TransactionConfirmed(uint256 indexed txId, address indexed owner);
     event TransactionExecuted(uint256 indexed txId);
-    
+
+    constructor() {
+        _disableInitializers();
+    }
+
     modifier onlyOwner() {
         require(isOwner(msg.sender), "Not owner");
         _;
     }
     
-    constructor(address[] memory _owners, uint256 _threshold) {
+    function initialize(address[] memory _owners, uint256 _threshold) public initializer {
         require(_threshold > 0, "Threshold must be > 0");
         require(_owners.length >= _threshold, "Owners < threshold");
-        
-        owners = _owners;
+
+        for (uint i = 0; i < _owners.length; i++) {
+            require(_owners[i] != address(0), "Invalid owner address");
+            owners.push(_owners[i]);
+        }
         threshold = _threshold;
     }
-    
+
     function submitTransaction(address _to, uint256 _value, bytes memory _data) external onlyOwner {
         uint256 txId = transactions.length;
         transactions.push(Transaction({
@@ -56,9 +65,12 @@ contract MultiSig {
         transactions[_txId].confirmationCount++;
         
         emit TransactionConfirmed(_txId, msg.sender);
+        if (transactions[_txId].confirmationCount >= threshold) {
+            _executeTransaction(_txId);
+        }
     }
     
-    function executeTransaction(uint256 _txId) external onlyOwner {
+    function _executeTransaction(uint256 _txId) internal {
         require(!transactions[_txId].executed, "Already executed");
         require(
             transactions[_txId].confirmationCount >= threshold,
@@ -69,7 +81,7 @@ contract MultiSig {
         (bool success, ) = transactions[_txId].to.call{value: transactions[_txId].value}(
             transactions[_txId].data
         );
-        console.log("Tx success:", success); // Добавьте эту строку
+        console.log("Tx success:", success);
         require(success, "Tx failed");
         
         emit TransactionExecuted(_txId);
@@ -102,5 +114,11 @@ contract MultiSig {
         Transaction storage t = transactions[_txId];
         return (t.to, t.value, t.data, t.executed, t.confirmationCount);
     }
-    receive() external payable {}
+
+    event FundsDeposited(uint256 amount);
+    receive() external payable {
+        emit FundsDeposited(msg.value);
+    }
+
+    function _authorizeUpgrade(address) internal override onlyOwner {}
 }
