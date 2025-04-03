@@ -1,22 +1,21 @@
 # MultiSig Wallet
 
-This project provides a secure upgradeable MultiSig wallet implementation with
-UUPS proxy pattern. The system allows:
+Core features:
 
-- Creation of configurable MultiSig wallets with arbitrary owners and
-  thresholds
+- ✨ **Configurable MultiSig wallets with custom owners and
+  thresholds**
 
-- Secure transaction management requiring multiple confirmations ($2/3$)
+- ✅ **2/3 Confirmations** 
 
-- Upgradeable logic while preserving wallet state
+- 🚀 **UUPS pattern for logic updates**
 
-# Protocol
+# Architecture
 
-## Proxy Contract
+## 📦 Proxy Contract
 
 ![](./img/diag-proxy.svg)
 
-## MultiSig Logic (UUPS)
+## 🧠 MultiSig Logic (UUPS)
 
 ![](./img/diag-ms.svg)
 
