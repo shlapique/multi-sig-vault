@@ -10,6 +10,15 @@ UUPS proxy pattern. The system allows:
 
 - Upgradeable logic while preserving wallet state
 
+# Protocol
+
+## Proxy Contract
+
+![](./img/diag-proxy.svg)
+
+## MultiSig Logic (UUPS)
+
+![](./img/diag-ms.svg)
 
 # Refs
 https://pkqs90.github.io/posts/gnosis-safe-walkthrough/
