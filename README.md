@@ -1,4 +1,4 @@
-# MultiSig Wallet
+# MultiSig Wallet 🔒
 
 Core features:
 

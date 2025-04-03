@@ -2,10 +2,11 @@ pragma solidity ^0.8.28;
 
 import {UUPSUpgradeable} from "@openzeppelin/contracts/proxy/utils/UUPSUpgradeable.sol";
 import {Initializable} from "@openzeppelin/contracts/proxy/utils/Initializable.sol";
+import {ReentrancyGuard} from "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 
 import {console} from "forge-std/console.sol";
 
-contract MultiSig is Initializable, UUPSUpgradeable {
+contract MultiSig is Initializable, UUPSUpgradeable, ReentrancyGuard {
     address[] public owners;
     uint256 public threshold;
     
