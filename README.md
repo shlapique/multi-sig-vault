@@ -1,7 +1,5 @@
-```{mermaid}
-%% Протокол MultiSig Wallet
+```mermaid
 flowchart TB
-    %% Основные компоненты системы
     subgraph ProxyLayer["Прокси-слой (Upgradeable)"]
         ERC1967Proxy["ERC1967Proxy\n• Хранит состояние\n• Делегирует вызовы"] -->|Прозрачное делегирование| MultiSigImpl["MultiSig Logic\n• Логика мультисиг\n• Без состояния"]
     end
@@ -12,7 +10,6 @@ flowchart TB
         MultiSigImpl --> Transactions["Транзакции (Transaction[])\n• to, value, data\n• executed, confirmationCount"]
     end
 
-    %% Процесс работы
     subgraph Workflow["Жизненный цикл транзакции"]
         direction LR
         A[Владелец] -->|submitTransaction| B["• Проверка onlyOwner\n• Добавление в массив\n• Event: TransactionSubmitted"]
@@ -21,22 +18,18 @@ flowchart TB
         D -->|Иначе| F[Ожидание]
     end
 
-    %% Безопасность и обновление
     subgraph Security["Безопасность"]
         UUPS["UUPSUpgradeable\n• upgradeToAndCall()"] -->|onlyOwner| Upgrade["• Новая логика\n• Сохранение:\n  - owners\n  - transactions\n  - баланс"]
         MultiSigImpl --> Initializable["• initialize() once\n• Проверки:\n  - threshold > 0\n  - valid owners"]
     end
 
-    %% Взаимодействия
     External((Внешние системы)) -->|Вызовы через прокси| ERC1967Proxy
     ERC1967Proxy -->|Автоматическая| Fallback["• receive()\n• fallback()"] --> FundsDeposited["Event: FundsDeposited"]
 
-    %% Связи
     ProxyLayer --> Workflow
     DataModel --> Workflow
     Security --> DataModel
 
-    %% Стили
     classDef proxy fill:#e1f5fe,stroke:#039be5,stroke-width:2px
     classDef logic fill:#f0f4c3,stroke:#afb42b,stroke-dasharray:5
     classDef process fill:#c8e6c9,stroke:#43a047,rounded
