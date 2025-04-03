@@ -77,12 +77,12 @@ contract MultiSig is Initializable, UUPSUpgradeable, ReentrancyGuard {
             transactions[_txId].confirmationCount >= threshold,
             "Not enough confirmations"
         );
-        
+
         transactions[_txId].executed = true;
         (bool success, ) = transactions[_txId].to.call{value: transactions[_txId].value}(
             transactions[_txId].data
         );
-        console.log("Tx success:", success);
+        // console.log("Tx success:", success);
         require(success, "Tx failed");
         
         emit TransactionExecuted(_txId);
