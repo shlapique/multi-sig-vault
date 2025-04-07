@@ -162,6 +162,10 @@ contract MultiSig is EIP712, Initializable {
             false
         );
     }
+
+    function getDomainSeparator() public view returns (bytes32) {
+        return _domainSeparatorV4();
+    }
     
     function updateThreshold(uint256 _newThreshold) external {
         require(msg.sender == address(this), "Unauthorized");

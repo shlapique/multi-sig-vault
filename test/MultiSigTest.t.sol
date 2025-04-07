@@ -11,6 +11,9 @@ contract MultiSigTest is Test {
     
     address[] public owners;
     uint256 public constant THRESHOLD = 2;
+
+    uint256 private constant ALICE_PK = 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80;
+    uint256 private constant BOB_PK = 0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d;
     
     address public ALICE = vm.addr(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80);
     address public BOB = vm.addr(0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d);
@@ -79,42 +82,36 @@ contract MultiSigTest is Test {
         multisig.confirmTransaction(txId);
     }
 
-    // function test_FullUpgradeFlow() public {
-    //     MultiSig newSingleton = new MultiSig();
+    function test_FullUpgradeFlow() public {
+        MultiSig newSingleton = new MultiSig();
         
-    //     
-    //     vm.prank(ALICE);
-    //     uint256 proposalId = multisig.proposeUpgrade(address(newSingleton));
-    //     bytes32 txHash = multisig.getUpgradeProposalTxHash(proposalId);
+        vm.prank(ALICE);
+        uint256 proposalId = multisig.proposeUpgrade(address(newSingleton));
+        bytes32 txHash = multisig.getUpgradeProposalTxHash(proposalId);
+        bytes32 domainSeparator = multisig.getDomainSeparator();
+        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, txHash));
         
-    //    
-    //     bytes32 prefixedHash = keccak256(abi.encodePacked("\x19\x01", multisig.DOMAIN_SEPARATOR(), txHash));
+        (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(ALICE_PK, prefixedHash);
+        multisig.approveUpgrade(proposalId, abi.encodePacked(r1, s1, v1));
         
-    //   
-    //     (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80, prefixedHash);
-    //     bytes memory sigAlice = abi.encodePacked(r1, s1, v1);
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(BOB_PK, prefixedHash);
+        multisig.approveUpgrade(proposalId, abi.encodePacked(r2, s2, v2));
         
-    //  
-    //     (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d, prefixedHash);
-    //     bytes memory sigBob = abi.encodePacked(r2, s2, v2);
-        
-    // 
-    //     multisig.approveUpgrade(proposalId, sigAlice);
-    //     multisig.approveUpgrade(proposalId, sigBob);
-        
-    //     (,, uint256 approvals) = multisig.getUpgradeProposal(proposalId);
-    //     assertEq(approvals, 2, "Should have 2 approvals");
-    //     assertEq(multisig.singleton(), address(newSingleton), "Singleton not updated");
-    // }
+        assertEq(multisig.singleton(), address(newSingleton), "Singleton not updated");
+    }
 
     function test_UpgradeSignatureReuse() public {
         MultiSig newSingleton = new MultiSig();
         
         vm.prank(ALICE);
         uint256 proposalId = multisig.proposeUpgrade(address(newSingleton));
-        
+
+
         bytes32 txHash = multisig.getUpgradeProposalTxHash(proposalId);
-        (uint8 v, bytes32 r, bytes32 s) = vm.sign(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80, txHash);
+        bytes32 domainSeparator = multisig.getDomainSeparator();
+        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, txHash));
+        
+        (uint8 v, bytes32 r, bytes32 s) = vm.sign(ALICE_PK, prefixedHash);
         bytes memory sig = abi.encodePacked(r, s, v);
         
         multisig.approveUpgrade(proposalId, sig);
@@ -179,8 +176,10 @@ contract MultiSigTest is Test {
         uint256 proposalId = multisig.proposeUpgrade(address(newSingleton));
         
         bytes32 txHash = multisig.getUpgradeProposalTxHash(proposalId);
-        (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80, txHash);
-        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(0x59c6995e998f97a5a0044966f0945389dc9e86dae88c7a8412f4603b6b78690d, txHash);
+        bytes32 domainSeparator = multisig.getDomainSeparator();
+        bytes32 prefixedHash = keccak256(abi.encodePacked("\x19\x01", domainSeparator, txHash));
+        (uint8 v1, bytes32 r1, bytes32 s1) = vm.sign(ALICE_PK, prefixedHash);
+        (uint8 v2, bytes32 r2, bytes32 s2) = vm.sign(BOB_PK, prefixedHash);
         
         multisig.approveUpgrade(proposalId, abi.encodePacked(r1, s1, v1));
         multisig.approveUpgrade(proposalId, abi.encodePacked(r2, s2, v2));
